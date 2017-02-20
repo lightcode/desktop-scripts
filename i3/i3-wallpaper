@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+
+import i3ipc
+import os
+import os.path
+import sys
+from subprocess import call
+
+
+def set_wallpaper(path):
+    call(['feh', '--no-fehbg', '--bg-scale', path])
+
+
+def choose_wallpaper(num, wallpaper_dir):
+    choices = sorted(os.listdir(wallpaper_dir))
+    path = choices[(num - 1) % len(choices)]
+    set_wallpaper(os.path.join(wallpaper_dir, path))
+
+
+def main():
+    if len(sys.argv) != 2:
+        print("Usage: i3-wallpaper [directory]")
+        sys.exit(1)
+
+    wallpaper_dir = os.path.abspath(os.path.expanduser(sys.argv[1]))
+
+    if not os.path.isdir(wallpaper_dir):
+        print("Error: the path provided is not a directory.")
+        sys.exit(1)
+
+    # Create the Connection object that can be used to send commands and
+    # subscribe to events.
+    i3 = i3ipc.Connection()
+
+    # Define a callback to be called when you switch workspaces.
+    def on_workspace_focus(self, e):
+        if e.current and e.current.num:
+            choose_wallpaper(e.current.num, wallpaper_dir)
+
+    # Change wallpaper when the program starts
+    ws = i3.get_tree().find_focused().workspace()
+    choose_wallpaper(ws.num if ws is not None else 0, wallpaper_dir)
+
+    # Subscribe to events
+    i3.on('workspace::focus', on_workspace_focus)
+
+    # Start the main loop and wait for events to come in.
+    i3.main()
+
+if __name__ == "__main__":
+    main()

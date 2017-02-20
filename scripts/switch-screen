@@ -1,0 +1,139 @@
+#!/bin/bash
+
+_get_screens() {
+  xrandr -q | awk '/^[A-Z]*[0-9] / { print $1 }'
+}
+
+_get_screen() {
+  local entry=$1
+  _get_screens | grep -i "^$entry\$"
+}
+
+_reload_desktop() {
+  /usr/bin/systemctl --user restart wallpaper
+}
+
+_usage() {
+  echo "Usage: switch-screen [OPTS]
+
+    -p|--primary
+    -l|--left
+    -t|--top
+    -b|--bottom
+    -r|--right
+    -d|--debug
+    --dry-run"
+  exit 1
+}
+
+_main() {
+  SHORT=dp:t:l:b:r:
+  LONG=debug,dry-run,primary:,top:,left:,bottom:,right:
+
+  # -temporarily store output to be able to check for errors
+  # -activate advanced mode getopt quoting e.g. via “--options”
+  # -pass arguments only via   -- "$@"   to separate them correctly
+  PARSED=`getopt --options $SHORT --longoptions $LONG --name "$0" -- "$@"`
+  if [[ $? != 0 ]]; then
+    _usage
+    exit 2
+  fi
+  # use eval with "$PARSED" to properly handle the quoting
+  eval set -- "$PARSED"
+
+  # now enjoy the options in order and nicely split until we see --
+  while true; do
+    case "$1" in
+      -d|--debug)
+        debug=y
+        shift
+        ;;
+      --dry-run)
+        dry_run=y
+        shift
+        ;;
+      -p|--primary)
+        primary_screen="$2"
+        shift 2
+        ;;
+      -t|--top)
+        top_screen="$2"
+        shift 2
+        ;;
+      -l|--left)
+        left_screen="$2"
+        shift 2
+        ;;
+      -b|--bottom)
+        bottom_screen="$2"
+        shift 2
+        ;;
+      -r|--right)
+        right_screen="$2"
+        shift 2
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        _usage
+        ;;
+      esac
+  done
+
+  # If we select --primary so we want change screen layout
+  if [[ -n "$primary_screen" ]]; then
+    declare -a used_screen unused_screen cmd
+
+    cmd[0]=xrandr
+
+    # Handle primary screen
+    screen=$(_get_screen $primary_screen)
+    if [[ $? != 0 ]]; then
+      echo "Unrecognized screen: $primary_screen"
+      exit 1
+    fi
+    [[ "$debug" == "y" ]] && echo "Primary screen: $screen"
+    primary_screen=$screen
+    cmd+=("--output $screen --auto --primary")
+    used_screen+=($screen)
+
+    # Handle side screens
+    for pos in left top bottom right; do
+      raw_screen=$(eval "echo \$${pos}_screen")
+      if [[ -n "$raw_screen" ]]; then
+        screen=$(_get_screen $raw_screen)
+        if [[ $? != 0 ]]; then
+          echo "Unrecognized screen: $screen"
+          exit 1
+        fi
+        [[ "$debug" == "y" ]] && echo "Side screen ($pos): $screen"
+        opt=""
+        case "$pos" in
+          left)   opt=--left-of  ;;
+          top)    opt=--above    ;;
+          bottom) opt=--below    ;;
+          right)  opt=--right-of ;;
+        esac
+        cmd+=("--output $screen ${opt} $primary_screen --auto")
+        used_screen+=($screen)
+      fi
+    done
+
+    # Handle unused screen
+    unused_screen=$(echo -e "${used_screen[@]}\n$(_get_screens)" | tr " " "\n" | sort | uniq -c | awk '$1 == 1 { print $2 }')
+    [[ "$debug" == "y" ]] && echo "Unused screens: $(tr '\n' ' ' <<<$unused_screen)"
+    for scr in $unused_screen; do
+      cmd+=("--output $scr --off")
+    done
+
+    # Execute xrandr command
+    if [[ "$debug" == "y" ]] || [[ "$dry_run" == "y" ]]; then
+      echo "Command: ${cmd[@]}"
+    fi
+    [[ "$dry_run" != "y" ]] && ${cmd[@]} && _reload_desktop
+  fi
+}
+
+_main $@

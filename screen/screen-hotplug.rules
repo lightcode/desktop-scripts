@@ -1,0 +1,2 @@
+# Execute a script when a screen is plugged
+ACTION=="change", SUBSYSTEM=="drm", ENV{HOTPLUG}=="1", RUN+="/opt/udev-scripts/udev-screen-hotplug.sh"

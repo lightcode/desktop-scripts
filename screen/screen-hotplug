@@ -1,8 +1,8 @@
 #!/bin/bash
 
-ext=( $(xrandr -q | awk '/^[A-Z]*[0-9] connected/ && ($1 ~ "^HDMI" || $1 ~ "^VGA") { print $1 }') )
+ext=( $(xrandr -q | awk '/^[A-Z-]*[0-9] connected/ && ($1 ~ "^HDMI" || $1 ~ "^VGA") { print $1 }') )
 
-opts="-p LVDS1"
+opts="-p LVDS-1"
 
 if [[ -n "$ext" ]]; then
   res=$(xrandr | grep "^${ext[0]} " -A 1 | sed '1 d' | awk '{ print $1 }')
@@ -15,4 +15,4 @@ if [[ -n "$ext" ]]; then
 
 fi
 
-/opt/bin/switch-screen $opts
+/usr/local/bin/switch-screen $opts

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 _get_screens() {
-  xrandr -q | awk '/^[A-Z]*[0-9] / { print $1 }'
+  xrandr -q | awk '/^[A-Z-]*[0-9] / { print $1 }'
 }
 
 _get_screen() {
@@ -10,7 +10,7 @@ _get_screen() {
 }
 
 _reload_desktop() {
-  /usr/bin/systemctl --user restart wallpaper
+  systemctl --user restart wallpaper
 }
 
 _usage() {

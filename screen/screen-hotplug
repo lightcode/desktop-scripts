@@ -15,4 +15,4 @@ if [[ -n "$ext" ]]; then
 
 fi
 
-/usr/local/bin/switch-screen $opts
+switch-screen $opts

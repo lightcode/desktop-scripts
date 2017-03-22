@@ -1,4 +1,5 @@
 install-udev-common:
+	install -m 0755 -o root -g root -d /opt/udev-scripts
 	install -m 0644 -o root -g root udev-common/shared.sh /opt/udev-scripts
 
 install-screen: install-udev-common

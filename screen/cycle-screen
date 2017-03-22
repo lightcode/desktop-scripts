@@ -16,4 +16,4 @@ count=$i
 next=$(( ($cur + 1) % $count ))
 nextscreen=${screens[$next]}
 
-/usr/bin/switch-screen -p $nextscreen
+switch-screen -p $nextscreen

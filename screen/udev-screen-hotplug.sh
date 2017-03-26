@@ -2,6 +2,4 @@
 
 source "$(dirname $0)/shared.sh"
 
-SCRIPT="/usr/local/bin/screen-hotplug"
-
-exec_all_session "$SCRIPT $opts"
+exec_all_session "/usr/local/bin/switch-screen -A biggest"

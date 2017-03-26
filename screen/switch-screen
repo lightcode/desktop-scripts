@@ -3,7 +3,7 @@
 CMDNAME="switch-screen"
 
 _get_screens() {
-  xrandr -q | awk '/^[A-Za-z][A-Za-z]*[0-9-]* connected / { print $1 }'
+  xrandr -q | awk '/^[A-Za-z][A-Za-z]*[0-9-]* (dis)?connected / { print $1 }'
 }
 
 _get_screen() {
@@ -162,7 +162,7 @@ _main() {
     done
 
     # Handle unused screen
-    unused_screen=$(echo -e "${used_screen[@]}\n$(_get_screens)" | tr " " "\n" | sort | uniq -c | awk '$1 == 1 { print $2 }')
+    unused_screen=$(printf '%s\n%s\n' "${used_screen[@]}" "$(_get_screens)" | sort | uniq -u)
     [[ "$debug" == "y" ]] && echo "Unused screens: $(tr '\n' ' ' <<<$unused_screen)"
     for scr in $unused_screen; do
       cmd+=("--output $scr --off")

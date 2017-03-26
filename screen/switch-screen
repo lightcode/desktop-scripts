@@ -16,6 +16,7 @@ _reload_desktop() {
 _usage() {
   echo "Usage: switch-screen [OPTS]
 
+    -L|--list
     -p|--primary
     -l|--left
     -t|--top
@@ -27,8 +28,8 @@ _usage() {
 }
 
 _main() {
-  SHORT=dp:t:l:b:r:
-  LONG=debug,dry-run,primary:,top:,left:,bottom:,right:
+  SHORT=dLp:t:l:b:r:
+  LONG=debug,list,dry-run,primary:,top:,left:,bottom:,right:
 
   # -temporarily store output to be able to check for errors
   # -activate advanced mode getopt quoting e.g. via “--options”
@@ -50,6 +51,10 @@ _main() {
         ;;
       --dry-run)
         dry_run=y
+        shift
+        ;;
+      -L|--list)
+        list=y
         shift
         ;;
       -p|--primary)
@@ -81,6 +86,11 @@ _main() {
         ;;
       esac
   done
+
+  if [[ "$list" == "y" ]]; then
+    _get_screens
+    exit
+  fi
 
   # If we select --primary so we want change screen layout
   if [[ -n "$primary_screen" ]]; then
